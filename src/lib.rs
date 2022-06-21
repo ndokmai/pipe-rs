@@ -72,6 +72,13 @@ pub fn pipe_buffered() -> (PipeReader, PipeBufWriter) {
     (PipeReader { receiver: rx, buffer: Vec::new(), position: 0 }, PipeBufWriter { sender: Some(tx), buffer: Vec::with_capacity(DEFAULT_BUF_SIZE), size: DEFAULT_BUF_SIZE } )
 }
 
+/// Creates a synchronous memory pipe with buffered writer given the capacity
+pub fn pipe_buffered_with_capacity(capacity: usize) -> (PipeReader, PipeBufWriter) {
+    let (tx, rx) = crossbeam_channel::bounded(0);
+
+    (PipeReader { receiver: rx, buffer: Vec::new(), position: 0 }, PipeBufWriter { sender: Some(tx), buffer: Vec::with_capacity(capacity), size: capacity } )
+}
+
 /// Creates a pair of pipes for bidirectional communication, a bit like UNIX's `socketpair(2)`.
 #[cfg(feature = "bidirectional")]
 #[cfg_attr(feature = "unstable-doc-cfg", doc(cfg(feature = "bidirectional")))]
@@ -87,6 +94,15 @@ pub fn bipipe() -> (readwrite::ReadWrite<PipeReader, PipeWriter>, readwrite::Rea
 pub fn bipipe_buffered() -> (readwrite::ReadWrite<PipeReader, PipeBufWriter>, readwrite::ReadWrite<PipeReader, PipeBufWriter>) {
     let (r1,w1) = pipe_buffered();
     let (r2,w2) = pipe_buffered();
+    ((r1,w2).into(), (r2,w1).into())
+}
+
+/// Creates a pair of pipes for bidirectional communication using buffered writer, a bit like UNIX's `socketpair(2)`, given the capacity.
+#[cfg(feature = "bidirectional")]
+#[cfg_attr(feature = "unstable-doc-cfg", doc(cfg(feature = "bidirectional")))]
+pub fn bipipe_buffered_with_capacity(capacity: usize) -> (readwrite::ReadWrite<PipeReader, PipeBufWriter>, readwrite::ReadWrite<PipeReader, PipeBufWriter>) {
+    let (r1,w1) = pipe_buffered_with_capacity(capacity);
+    let (r2,w2) = pipe_buffered_with_capacity(capacity);
     ((r1,w2).into(), (r2,w1).into())
 }
 
